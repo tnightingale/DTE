@@ -152,16 +152,19 @@ BOOL StartReadThread(HANDLE hCom, PWDATA pWData) {
 //BOOL ReadThread(HANDLE hCom) {
 BOOL ReadThread(PWDATA pWData) {
     char* readBuff = (char*) malloc(sizeof(char[1]));
+    *readBuff = NULL;
 
     while (pWData->state == CONNECT && pWData->bReading) {
+        Sleep(10);
         if (!Recieve(pWData->hCom, readBuff)) {
             return FALSE;
         }
-        if (*readBuff == '\0') {
+        if (*readBuff == NULL) {
             continue;
         }
         
         printChar(readBuff, pWData);
+        *readBuff = NULL;
     }
 
     return TRUE;
