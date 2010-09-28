@@ -4,13 +4,13 @@
 void printChar(char* readBuff, PWDATA pWData) {
     HDC hdc = GetDC(pWData->hwnd);
     LPCWSTR cstr;
-    WCHAR str[6];
+    WCHAR str[1];
 
     static int textX = 0; 
     static int textY = 0;
     
     // This is gross.
-    MultiByteToWideChar(0, 0, readBuff, 5, str, 6);
+    MultiByteToWideChar(0, 0, readBuff, 1, str, 1);
     cstr = str;
 
     // Print text.
