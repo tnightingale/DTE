@@ -9,9 +9,6 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 	SIZE size;
     PWDATA pWData;
 
-    //static HANDLE hCom;
-    //static enum STATE state; 
-
 	switch (Message) {
         //case WM_CREATE:
         //    state = COMMAND;
@@ -112,6 +109,7 @@ HANDLE ConnectComm(HWND hwnd, LPWSTR lpFileName) {
     DWORD err;
     BOOL success;
     COMMCONFIG cc;
+    COMMTIMEOUTS CommTimeouts;
 
     hCom = OpenPort(lpFileName);
 
@@ -124,6 +122,19 @@ HANDLE ConnectComm(HWND hwnd, LPWSTR lpFileName) {
 	    err = GetLastError();
 		return NULL;
 	}
+
+    //if(!GetCommTimeouts(hCom, &CommTimeouts)) {
+    //}
+
+    //CommTimeouts.ReadIntervalTimeout = 1000;
+    //CommTimeouts.ReadTotalTimeoutMultiplier = 2;
+    //CommTimeouts.ReadTotalTimeoutConstant = 1000;
+
+    //CommTimeouts.WriteTotalTimeoutMultiplier = 2;
+    //CommTimeouts.WriteTotalTimeoutConstant = 1000;
+
+    //SetCommTimeouts(hCom, &CommTimeouts);
+
 
     return hCom;
 }

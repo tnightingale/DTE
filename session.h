@@ -11,6 +11,7 @@ typedef struct _WDATA {
     enum STATE state;
     HWND hwnd;
     TCHAR readBuff;
+    //TCHAR* output;
     //int textX;
     //int textY;
 } WDATA, *PWDATA;
