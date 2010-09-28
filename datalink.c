@@ -8,7 +8,7 @@ HANDLE OpenPort(LPCWSTR lpFileName) {
 
 	// Create handle
 	hCom = CreateFile (
-		lpFileName,								// LPCSTR lpFileName
+		lpFileName,							// LPCSTR lpFileName
 		GENERIC_READ | GENERIC_WRITE,		// DWORD dwDesiredAccess
 		0,									// DWORD dwShareMode
 		NULL,								// LPSECURITY_ATTRIBUTES lpSecurityAttributes
@@ -47,8 +47,10 @@ int Transmit(HANDLE hCom, TCHAR c) {
 BOOL Recieve(HANDLE hCom, TCHAR* readBuff) {
     DWORD dwBytesToRead = 1;
     DWORD dwBytesRead = 0;
+    DWORD err;
         
     if(!ReadFile(hCom, readBuff, dwBytesToRead, &dwBytesRead, NULL)) {
+        err = GetLastError();
         return FALSE;
     }
 

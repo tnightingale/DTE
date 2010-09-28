@@ -1,3 +1,6 @@
+#ifndef SESSION_H /* Convention is file name with '.' replaced by underscores. */
+#define SESSION_H
+
 #include <Windows.h>
 
 typedef struct _WDATA {
@@ -6,6 +9,10 @@ typedef struct _WDATA {
     HANDLE hThread;
     HANDLE hCom;
     enum STATE state;
+    HWND hwnd;
+    TCHAR readBuff;
+    //int textX;
+    //int textY;
 } WDATA, *PWDATA;
 
 enum STATE {
@@ -18,3 +25,5 @@ HANDLE ConnectComm(HWND hwnd, LPCWSTR lpFileName);
 BOOL StartReadThread(HANDLE hCom, PWDATA pWData);
 BOOL ReadThread(PWDATA);
 void EndThread(PWDATA);
+
+#endif
