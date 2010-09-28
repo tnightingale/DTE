@@ -1,13 +1,24 @@
 #include "application.h"
 #include "session.h"
 
-void printChar(TCHAR* readBuff, PWDATA pWData) {
-    //HDC hdc = GetDC(pWData->hwnd);
+void printChar(char* readBuff, PWDATA pWData) {
+    HDC hdc = GetDC(pWData->hwnd);
+    LPCWSTR cstr;
+    WCHAR str[6];
 
-    //TextOut(hdc, pWData->textX, pWData->textY, readBuff, 1);
+    static int textX = 0; 
+    static int textY = 0;
+    
+    // This is gross.
+    MultiByteToWideChar(0, 0, readBuff, 5, str, 6);
+    cstr = str;
 
-    //pWData->textX = pWData->textX + 10;
-    //pWData->textY = pWData->textY + 10;
+    // Print text.
+    TextOut(hdc, textX, textY, cstr, 1);
 
-    //ReleaseDC(pWData->hwnd, hdc);
+    // Move cursor.
+    textX = textX + 15;
+    //textY = textY + 10;
+
+    ReleaseDC(pWData->hwnd, hdc);
 }

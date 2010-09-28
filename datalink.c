@@ -44,7 +44,7 @@ int Transmit(HANDLE hCom, TCHAR c) {
 	return 0;
 }
 
-BOOL Recieve(HANDLE hCom, TCHAR* readBuff) {
+BOOL Recieve(HANDLE hCom, char* readBuff) {
     DWORD dwBytesToRead = 1;
     DWORD dwBytesRead = 0;
     DWORD err;

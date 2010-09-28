@@ -60,7 +60,5 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance, LPSTR lspszCmdParam
 		DispatchMessage(&Msg);
 	}
 
-    free(pWData);
-
 	return Msg.wParam;
 }

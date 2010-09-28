@@ -1,4 +1,5 @@
 #include <Windows.h>
+#include <stdio.h>
 #include "session.h"
 
 #define IDM_CONNECT		100
@@ -11,5 +12,5 @@
 #define IDM_COM5		113
 #define IDM_COM6		114
 
-void printChar(TCHAR*, PWDATA);
+void printChar(char*, PWDATA);
 

@@ -96,10 +96,9 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 		case WM_DESTROY:	// Terminate program
             pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
             if (pWData->bReading) {
-                pWData->bReading = FALSE;
                 EndThread(pWData);
             }
-      		PostQuitMessage (0);
+      		PostQuitMessage(0);
 		break;
 		
 		default:
@@ -152,14 +151,10 @@ BOOL StartReadThread(HANDLE hCom, PWDATA pWData) {
 
 //BOOL ReadThread(HANDLE hCom) {
 BOOL ReadThread(PWDATA pWData) {
-    TCHAR* readBuff = (TCHAR*) malloc(sizeof(TCHAR));
-    char read[1024];
-    int count = 0;
+    char* readBuff = (char*) malloc(sizeof(char[1]));
 
-    while (pWData->state == CONNECT) {
-    //while (TRUE) {
+    while (pWData->state == CONNECT && pWData->bReading) {
         if (!Recieve(pWData->hCom, readBuff)) {
-        //if (!Recieve(hCom, readBuff)) {
             return FALSE;
         }
         if (*readBuff == '\0') {
@@ -167,7 +162,6 @@ BOOL ReadThread(PWDATA pWData) {
         }
         
         printChar(readBuff, pWData);
-        //count = count + sprintf(read + count, "%c", *readBuff);
     }
 
     return TRUE;
