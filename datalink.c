@@ -13,7 +13,7 @@ HANDLE OpenPort(LPCWSTR lpFileName) {
 		0,									// DWORD dwShareMode
 		NULL,								// LPSECURITY_ATTRIBUTES lpSecurityAttributes
 		OPEN_EXISTING,						// DWORD dwCreationDistribution 
-		0,									// DWORD dwFlagsAndAttributes
+		FILE_ATTRIBUTE_NORMAL,				// DWORD dwFlagsAndAttributes
 		NULL								// HANDLE hTemplateFile
 	);
 	
@@ -22,10 +22,10 @@ HANDLE OpenPort(LPCWSTR lpFileName) {
 	}
 
 	// Setting extra port settings. (NOTE: What do these do?)
-	inQueue = outQueue = 1024;
-	if(!SetupComm (hCom, inQueue, outQueue)) {
-		return hCom;
-	}
+	//inQueue = outQueue = 1024;
+	//if(!SetupComm (hCom, inQueue, outQueue)) {
+	//	return hCom;
+	//}
 
 	return hCom;
 }
@@ -36,7 +36,7 @@ int Transmit(HANDLE hCom, TCHAR c) {
     DWORD err;
 
 	// Write
-	if (!WriteFile (hCom, &c, dwBytesToWrite, &dwBytesWritten, NULL)) {
+	if (!WriteFile(hCom, &c, dwBytesToWrite, &dwBytesWritten, NULL)) {
 		err = GetLastError();
 		return 1;
 	}
