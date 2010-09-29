@@ -44,14 +44,10 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance, LPSTR lspszCmdParam
 
     pWData = (PWDATA) malloc(sizeof(PWDATA));
     pWData->state = COMMAND;
-    //pWData->bReading = FALSE;
-    //pWData->hThread = NULL;
     pWData->hwnd = hwnd;
     pWData->output.out = (TCHAR*) malloc(sizeof(TCHAR) * 8);
     pWData->output.size = 8;
     pWData->output.pos = 0;
-            //pWData->textX = 0;
-            //pWData->textY = 0;
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG) pWData);
 
