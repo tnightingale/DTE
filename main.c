@@ -44,20 +44,27 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance, LPSTR lspszCmdParam
 
     pWData = (PWDATA) malloc(sizeof(PWDATA));
     pWData->state = COMMAND;
-    pWData->bReading = FALSE;
-    pWData->hThread = NULL;
+    //pWData->bReading = FALSE;
+    //pWData->hThread = NULL;
     pWData->hwnd = hwnd;
             //pWData->textX = 0;
             //pWData->textY = 0;
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG) pWData);
 
-    ShowWindow (hwnd, nCmdShow);
-	UpdateWindow (hwnd);
+    ShowWindow(hwnd, nCmdShow);
+	UpdateWindow(hwnd);
 
-	while (GetMessage(&Msg, NULL, 0, 0)) {
-   		TranslateMessage(&Msg);
-		DispatchMessage(&Msg);
+	while (TRUE) {
+        if (PeekMessage(&Msg, hwnd, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&Msg);
+		    DispatchMessage(&Msg);
+        }
+        else {
+            if (pWData->state == CONNECT) {
+                pollPort(pWData);
+            }
+        }
 	}
 
 	return Msg.wParam;
