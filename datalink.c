@@ -44,11 +44,11 @@ int Transmit(HANDLE hCom, TCHAR c) {
 	return 0;
 }
 
-BOOL Recieve(HANDLE hCom, char* readBuff) {
+BOOL Recieve(HANDLE hCom, TCHAR* readBuff) {
     DWORD dwBytesToRead = 1;
     DWORD dwBytesRead = 0;
     DWORD err;
-        
+    
     if(!ReadFile(hCom, readBuff, dwBytesToRead, &dwBytesRead, NULL)) {
         err = GetLastError();
         return FALSE;
