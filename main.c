@@ -6,6 +6,8 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance, LPSTR lspszCmdParam
 	MSG Msg;
 	WNDCLASSEX Wcl;
     PWDATA pWData;
+	HANDLE hHeap;
+	int i;
 
 	TCHAR Name[] = TEXT("Dumb Terminial Emulator");
 
@@ -42,12 +44,21 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance, LPSTR lspszCmdParam
         NULL
     );
 
-    pWData = (PWDATA) malloc(sizeof(PWDATA));
+
+	hHeap = GetProcessHeap();
+    //pWData = (PWDATA) HeapAlloc(hHeap, HEAP_GENERATE_EXCEPTIONS, sizeof(PWDATA));
+	pWData = (PWDATA) malloc(sizeof(PWDATA));
+	pWData->hHeap = hHeap;
+	pWData->hwnd = hwnd;
     pWData->state = COMMAND;
-    pWData->hwnd = hwnd;
-    pWData->output.out = (TCHAR*) malloc(sizeof(TCHAR) * 8);
+	
+	pWData->output.out = (TCHAR*) HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sizeof(TCHAR) * 8);
     pWData->output.size = 8;
     pWData->output.pos = 0;
+	FillMemory(pWData->output.out, pWData->output.size, ' ');
+
+    pWData->wnSize.cx = 0;
+    pWData->wnSize.cy = 0;
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG) pWData);
 
