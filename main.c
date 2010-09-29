@@ -57,7 +57,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance, LPSTR lspszCmdParam
 	while (TRUE) {
         if (PeekMessage(&Msg, NULL, 0, 0, PM_REMOVE)) {
             if (Msg.message == WM_QUIT) {
-                break;
+                return Msg.wParam;
             }
             TranslateMessage(&Msg);
 		    DispatchMessage(&Msg);

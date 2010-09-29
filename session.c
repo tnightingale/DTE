@@ -103,13 +103,16 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
 		case WM_DESTROY:	// Terminate program
             pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
-            CloseHandle(pWData->hCom);
+            if (pWData->state == CONNECT) {
+                CloseHandle(pWData->hCom);
+            }
       		PostQuitMessage(0);
-		break;
+		    break;
 		
 		default:
 			return DefWindowProc(hwnd, Message, wParam, lParam);
 	}
+
 	return 0;
 }
 
@@ -140,7 +143,7 @@ HANDLE ConnectComm(HWND hwnd, LPCWSTR lpFileName) {
     CommTimeouts.ReadTotalTimeoutConstant = 1000;
 
     CommTimeouts.WriteTotalTimeoutMultiplier = 2;
-    CommTimeouts.WriteTotalTimeoutConstant = 1000;
+    CommTimeouts.WriteTotalTimeoutConstant = 10;
 
     SetCommTimeouts(hCom, &CommTimeouts);
 
@@ -148,84 +151,15 @@ HANDLE ConnectComm(HWND hwnd, LPCWSTR lpFileName) {
     return hCom;
 }
 
-/*
-BOOL StartReadThread(HANDLE hCom, PWDATA pWData) {
-
-    // create the thread for reading bytes
-    pWData->bReading = TRUE;
-	pWData->hThread = CreateThread(
-        NULL, // def security 
-        0, // def stack size
-        (LPTHREAD_START_ROUTINE) ReadThread, 
-        //hCom, // param to pass to thread
-        pWData,
-        0, 
-        &pWData->threadId
-    );
-	if (pWData->hThread == INVALID_HANDLE_VALUE) {
-        return FALSE;
-	} 
-	// end if (error creating read thread)
-
-    return TRUE;
-}
-*/
-
-//BOOL ReadThread(HANDLE hCom) {
-/*
-BOOL ReadThread(PWDATA pWData) {
-    char* readBuff = (char*) malloc(sizeof(char[1]));
-    *readBuff = NULL;
-
-    while (pWData->state == CONNECT && pWData->bReading) {
-        if (!Recieve(pWData->hCom, readBuff)) {
-            return FALSE;
-        }
-        if (*readBuff == NULL) {
-            continue;
-        }
-        
-        printChar(readBuff, pWData);
-        *readBuff = NULL;
-    }
-
-    return TRUE;
-}
-*/
-/*
-void EndThread(PWDATA pWData) {
-    // kill the read thread
-    pWData->state = COMMAND;
-    pWData->bReading = FALSE;
-    // in case the thread is not running, resume it now
-    ResumeThread(pWData->hThread);
-    
-    // wait for thread to die... 
-    while (GetExitCodeThread(pWData->hThread, &pWData->threadId)) {
-        if (pWData->threadId == STILL_ACTIVE) {
-            continue;
-		} else {
-            break;
-        }
-    }
-    // end while (no error reading thread exit code)
-    CloseHandle (pWData->hThread);
-}
-*/
-
 void pollPort(PWDATA pWData) {
-    TCHAR readBuff;
+    HDC hdc;
+    TCHAR readBuff = '\0';
 
-    readBuff = '\0';
-
-    // NEED TO MALLOC READBUFF?
     if (!Recieve(pWData->hCom, &readBuff)) {
-        //free(readBuff);
         return;
     }
 
-    if (readBuff == NULL) {
-        //free(readBuff);
+    if (readBuff == (TCHAR) NULL) {
         return;
     }
 
