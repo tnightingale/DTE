@@ -5,8 +5,8 @@
 LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
 	HDC hdc;
 	PAINTSTRUCT paintstruct;
-	TEXTMETRIC tm;
-	SIZE size;
+	//TEXTMETRIC tm;
+	//SIZE size;
     PWDATA pWData;
 
 	switch (Message) {
@@ -58,12 +58,12 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     //state = CONNECT;
                     pWData->state = CONNECT;
                     //if (!StartReadThread(hCom, pWData)) {
-                    if (!StartReadThread(pWData->hCom, pWData)) {
+                    //if (!StartReadThread(pWData->hCom, pWData)) {
                         //state = COMMAND;
-                        pWData->state = COMMAND;
-                        MessageBox (hwnd, TEXT("ERROR: Couldn't start thread."), NULL, MB_ICONERROR);
-                        return 0;
-                    }
+                    //    pWData->state = COMMAND;
+                    //    MessageBox (hwnd, TEXT("ERROR: Couldn't start thread."), NULL, MB_ICONERROR);
+                    //    return 0;
+                    //}
 
                     break;
 			}
@@ -77,7 +77,8 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             }
 
             if (wParam == VK_ESCAPE) {
-                EndThread(pWData);
+                //EndThread(pWData);
+                pWData->state = COMMAND;
             }
 
             //Transmit(hCom, wParam);
@@ -92,9 +93,7 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
 		case WM_DESTROY:	// Terminate program
             pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
-            if (pWData->bReading) {
-                EndThread(pWData);
-            }
+            CloseHandle(pWData->hCom);
       		PostQuitMessage(0);
 		break;
 		
@@ -104,7 +103,7 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-HANDLE ConnectComm(HWND hwnd, LPWSTR lpFileName) {
+HANDLE ConnectComm(HWND hwnd, LPCWSTR lpFileName) {
     HANDLE hCom;
     DWORD err;
     BOOL success;
@@ -139,15 +138,16 @@ HANDLE ConnectComm(HWND hwnd, LPWSTR lpFileName) {
     return hCom;
 }
 
+/*
 BOOL StartReadThread(HANDLE hCom, PWDATA pWData) {
 
-/* create the thread for reading bytes */
+    // create the thread for reading bytes
     pWData->bReading = TRUE;
 	pWData->hThread = CreateThread(
-        NULL, /*def security */ 
-        0, /* def stack size */ 
+        NULL, // def security 
+        0, // def stack size
         (LPTHREAD_START_ROUTINE) ReadThread, 
-        //hCom, /* param to pass to thread */
+        //hCom, // param to pass to thread
         pWData,
         0, 
         &pWData->threadId
@@ -155,18 +155,19 @@ BOOL StartReadThread(HANDLE hCom, PWDATA pWData) {
 	if (pWData->hThread == INVALID_HANDLE_VALUE) {
         return FALSE;
 	} 
-	/* end if (error creating read thread) */
+	// end if (error creating read thread)
 
     return TRUE;
 }
+*/
 
 //BOOL ReadThread(HANDLE hCom) {
+/*
 BOOL ReadThread(PWDATA pWData) {
     char* readBuff = (char*) malloc(sizeof(char[1]));
     *readBuff = NULL;
 
     while (pWData->state == CONNECT && pWData->bReading) {
-        Sleep(10);
         if (!Recieve(pWData->hCom, readBuff)) {
             return FALSE;
         }
@@ -180,15 +181,16 @@ BOOL ReadThread(PWDATA pWData) {
 
     return TRUE;
 }
-
+*/
+/*
 void EndThread(PWDATA pWData) {
-    /* kill the read thread */
+    // kill the read thread
     pWData->state = COMMAND;
     pWData->bReading = FALSE;
-    /* in case the thread is not running, resume it now */
+    // in case the thread is not running, resume it now
     ResumeThread(pWData->hThread);
     
-    /* wait for thread to die...  */
+    // wait for thread to die... 
     while (GetExitCodeThread(pWData->hThread, &pWData->threadId)) {
         if (pWData->threadId == STILL_ACTIVE) {
             continue;
