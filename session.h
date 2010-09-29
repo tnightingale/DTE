@@ -2,6 +2,13 @@
 #define SESSION_H
 
 #include <Windows.h>
+#include <tchar.h>
+
+typedef struct _OUTPUT {
+    TCHAR* out;
+    int pos;
+    int size;
+} OUTPUT, *POUTPUT;
 
 typedef struct _WDATA {
     //DWORD threadId;
@@ -10,6 +17,7 @@ typedef struct _WDATA {
     HANDLE hCom;
     enum STATE state;
     HWND hwnd;
+    OUTPUT output;
     //int textX;
     //int textY;
 } WDATA, *PWDATA;

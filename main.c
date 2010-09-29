@@ -47,6 +47,9 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance, LPSTR lspszCmdParam
     //pWData->bReading = FALSE;
     //pWData->hThread = NULL;
     pWData->hwnd = hwnd;
+    pWData->output.out = (TCHAR*) malloc(sizeof(TCHAR) * 8);
+    pWData->output.size = 8;
+    pWData->output.pos = 0;
             //pWData->textX = 0;
             //pWData->textY = 0;
 
