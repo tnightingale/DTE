@@ -5,13 +5,20 @@
 LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
 	HDC hdc;
 	PAINTSTRUCT paintstruct;
-	//SIZE size;
     PWDATA pWData;
+	HMENU menu;
 
 	switch (Message) {
-        //case WM_CREATE:
-        //    state = COMMAND;
-        //    break;
+
+        case WM_SIZE:
+            pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
+            pWData->wnSize.cx = LOWORD(lParam);
+            pWData->wnSize.cy = HIWORD(lParam);
+        
+			hdc = GetDC(hwnd);
+            printOut(pWData, hdc);
+			ReleaseDC(hwnd, hdc);
+            break;
 
 		case WM_COMMAND:
             pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
@@ -54,36 +61,38 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
                 case IDM_CONNECT:
                     pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
-                    //state = CONNECT;
-                    pWData->state = CONNECT;
-                    //if (!StartReadThread(hCom, pWData)) {
-                    //if (!StartReadThread(pWData->hCom, pWData)) {
-                        //state = COMMAND;
-                    //    pWData->state = COMMAND;
-                    //    MessageBox (hwnd, TEXT("ERROR: Couldn't start thread."), NULL, MB_ICONERROR);
-                    //    return 0;
-                    //}
-
+					if (pWData->hCom == INVALID_HANDLE_VALUE) {
+						MessageBox(pWData->hwnd, TEXT("You need to set a port before you can connect."), NULL, MB_ICONERROR);
+						break;
+					}
+						
+					pWData->state = CONNECT;
+					
+					menu = GetMenu(hwnd);
+					setMenu(menu, MF_GRAYED);
                     break;
 			}
 			break;
 
         case WM_CHAR:
             pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
-            //if (state != CONNECT) {
+            
             if (pWData->state != CONNECT) {
                 break;
             }
 
             if (wParam == VK_ESCAPE) {
-                //EndThread(pWData);
                 pWData->state = COMMAND;
+				CloseHandle(pWData->hCom);
+				menu = GetMenu(hwnd);
+				setMenu(menu, MF_ENABLED);
+				break;
             }
 
             //Transmit(hCom, wParam);
             Transmit(pWData->hCom, wParam);
             if (!outputAddChar((TCHAR) wParam, &(pWData->output))) {
-                MessageBox (pWData->hwnd, TEXT("MASSIVE ERROR."), NULL, MB_ICONERROR);
+                MessageBox(pWData->hwnd, TEXT("MASSIVE ERROR."), NULL, MB_ICONERROR);
                 CloseHandle(pWData->hCom);
                 PostQuitMessage(0);
             }
@@ -138,12 +147,12 @@ HANDLE ConnectComm(HWND hwnd, LPCWSTR lpFileName) {
     if(!GetCommTimeouts(hCom, &CommTimeouts)) {
     }
 
-    CommTimeouts.ReadIntervalTimeout = 1000;
+    CommTimeouts.ReadIntervalTimeout = 100;
     CommTimeouts.ReadTotalTimeoutMultiplier = 2;
     CommTimeouts.ReadTotalTimeoutConstant = 1000;
 
     CommTimeouts.WriteTotalTimeoutMultiplier = 2;
-    CommTimeouts.WriteTotalTimeoutConstant = 10;
+    CommTimeouts.WriteTotalTimeoutConstant = 1;
 
     SetCommTimeouts(hCom, &CommTimeouts);
 
@@ -175,11 +184,21 @@ void pollPort(PWDATA pWData) {
 }
 
 BOOL outputAddChar(TCHAR c, POUTPUT pOutput) {
+	DWORD err;
+	TCHAR* tmp;
 
     if (pOutput->pos == pOutput->size -1) {
         pOutput->size = pOutput->size * 2;
 
-        pOutput->out = (TCHAR*) realloc(pOutput->out, pOutput->size * sizeof(TCHAR));
+		//tmp = (TCHAR*) LocalAlloc(LMEM_MOVEABLE, sizeof(TCHAR) * pOutput->size);
+		tmp = (TCHAR*) HeapReAlloc(GetProcessHeap(), HEAP_GENERATE_EXCEPTIONS, pOutput->out, sizeof(TCHAR) * pOutput->size);
+		if (tmp == NULL) {
+			err = GetLastError();
+			return FALSE;
+		}
+		FillMemory(tmp + pOutput->pos, pOutput->size - pOutput->pos, ' ');
+		pOutput->out = tmp;
+
         if (pOutput->out == NULL) {
             return FALSE;
         }

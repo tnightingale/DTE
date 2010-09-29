@@ -11,15 +11,12 @@ typedef struct _OUTPUT {
 } OUTPUT, *POUTPUT;
 
 typedef struct _WDATA {
-    //DWORD threadId;
-    //BOOL bReading;
-    //HANDLE hThread;
+    SIZE wnSize;
     HANDLE hCom;
     enum STATE state;
     HWND hwnd;
     OUTPUT output;
-    //int textX;
-    //int textY;
+	HANDLE hHeap;
 } WDATA, *PWDATA;
 
 enum STATE {
