@@ -122,17 +122,17 @@ HANDLE ConnectComm(HWND hwnd, LPCWSTR lpFileName) {
 		return NULL;
 	}
 
-    //if(!GetCommTimeouts(hCom, &CommTimeouts)) {
-    //}
+    if(!GetCommTimeouts(hCom, &CommTimeouts)) {
+    }
 
-    //CommTimeouts.ReadIntervalTimeout = 1000;
-    //CommTimeouts.ReadTotalTimeoutMultiplier = 2;
-    //CommTimeouts.ReadTotalTimeoutConstant = 1000;
+    CommTimeouts.ReadIntervalTimeout = 1000;
+    CommTimeouts.ReadTotalTimeoutMultiplier = 2;
+    CommTimeouts.ReadTotalTimeoutConstant = 1000;
 
-    //CommTimeouts.WriteTotalTimeoutMultiplier = 2;
-    //CommTimeouts.WriteTotalTimeoutConstant = 1000;
+    CommTimeouts.WriteTotalTimeoutMultiplier = 2;
+    CommTimeouts.WriteTotalTimeoutConstant = 1000;
 
-    //SetCommTimeouts(hCom, &CommTimeouts);
+    SetCommTimeouts(hCom, &CommTimeouts);
 
 
     return hCom;
@@ -198,6 +198,48 @@ void EndThread(PWDATA pWData) {
             break;
         }
     }
-    /* end while (no error reading thread exit code) */	
+    // end while (no error reading thread exit code)
     CloseHandle (pWData->hThread);
+}
+*/
+
+void pollPort(PWDATA pWData) {
+    TCHAR readBuff;
+
+    readBuff = '\0';
+
+    // NEED TO MALLOC READBUFF?
+    if (!Recieve(pWData->hCom, &readBuff)) {
+        //free(readBuff);
+        return;
+    }
+
+    if (readBuff == NULL) {
+        //free(readBuff);
+        return;
+    }
+
+    if (!outputAddChar(readBuff, &(pWData->output))) {
+        MessageBox (pWData->hwnd, TEXT("MASSIVE ERROR."), NULL, MB_ICONERROR);
+        CloseHandle(pWData->hCom);
+        PostQuitMessage(0);
+    }
+
+    printChar(&readBuff, pWData);
+}
+
+BOOL outputAddChar(TCHAR c, POUTPUT pOutput) {
+
+    if (pOutput->pos == pOutput->size -1) {
+        pOutput->size = pOutput->size * 2;
+
+        pOutput->out = (TCHAR*) realloc(pOutput->out, pOutput->size * sizeof(TCHAR));
+        if (pOutput->out == NULL) {
+            return FALSE;
+        }
+    }
+
+    pOutput->out[pOutput->pos++] = c;
+
+    return TRUE;
 }
