@@ -5,7 +5,6 @@
 LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
 	HDC hdc;
 	PAINTSTRUCT paintstruct;
-	//TEXTMETRIC tm;
 	//SIZE size;
     PWDATA pWData;
 
@@ -83,12 +82,23 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
             //Transmit(hCom, wParam);
             Transmit(pWData->hCom, wParam);
+            if (!outputAddChar((TCHAR) wParam, &(pWData->output))) {
+                MessageBox (pWData->hwnd, TEXT("MASSIVE ERROR."), NULL, MB_ICONERROR);
+                CloseHandle(pWData->hCom);
+                PostQuitMessage(0);
+            }
+            hdc = GetDC(hwnd);
+            printOut(pWData, hdc);
+            ReleaseDC(hwnd, hdc);
             break;
 
 		case WM_PAINT:		// Process a repaint message
-			hdc = BeginPaint (hwnd, &paintstruct); // Acquire DC
-
-			EndPaint(hwnd, &paintstruct);
+			pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
+            hdc = BeginPaint (hwnd, &paintstruct); // Acquire DC            
+           
+            printOut(pWData, hdc);
+			
+            EndPaint(hwnd, &paintstruct);
 		break;
 
 		case WM_DESTROY:	// Terminate program
@@ -225,7 +235,9 @@ void pollPort(PWDATA pWData) {
         PostQuitMessage(0);
     }
 
-    printChar(&readBuff, pWData);
+    hdc = GetDC(pWData->hwnd);
+    printOut(pWData, hdc);
+    ReleaseDC(pWData->hwnd, hdc);
 }
 
 BOOL outputAddChar(TCHAR c, POUTPUT pOutput) {

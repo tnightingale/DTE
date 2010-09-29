@@ -1,24 +1,24 @@
 #include "application.h"
 #include "session.h"
 
-void printChar(TCHAR* readBuff, PWDATA pWData) {
-    HDC hdc = GetDC(pWData->hwnd);
-    LPCWSTR cstr;
-    WCHAR str[1];
+void printOut(PWDATA pWData, HDC hdc) {
+    TEXTMETRIC tm; 
+    HFONT hFont;
 
-    static int textX = 0; 
-    static int textY = 0;
+    int textX = 0; 
+    int textY = 0;
+
+    GetTextMetrics(hdc, &tm);
+
+    hFont = (HFONT) GetStockObject(ANSI_FIXED_FONT);
+    SelectObject(hdc, hFont);
+
+    TextOut(hdc, 0, 0, pWData->output.out, pWData->output.pos);
     
-    // This is gross.
-    //MultiByteToWideChar(0, 0, readBuff, 1, str, 1);
-    cstr = str;
-
     // Print text.
-    TextOut(hdc, textX, textY, cstr, 1);
+    //TextOut(hdc, textX, textY, readBuff, 1);
 
     // Move cursor.
-    textX = textX + 15;
+    //textX = textX + 15;
     //textY = textY + 10;
-
-    ReleaseDC(pWData->hwnd, hdc);
 }

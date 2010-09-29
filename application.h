@@ -12,5 +12,5 @@
 #define IDM_COM5		113
 #define IDM_COM6		114
 
-void printChar(TCHAR*, PWDATA);
+void printOut(PWDATA, HDC);
 
