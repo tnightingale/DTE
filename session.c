@@ -1,6 +1,59 @@
+/*------------------------------------------------------------------------------------------------------------------ 
+ --	SOURCE FILE: session.c - Handles all messages via WndProc().
+ -- 
+ --	PROGRAM: dte
+ -- 
+ -- Functions:  
+ --             LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
+ --             HANDLE ConnectComm(HWND hwnd, LPCWSTR lpFileName);
+ --             void pollPort(PWDATA pWData);
+ --             BOOL outputAddChar(TCHAR c, POUTPUT pOutput);
+ --
+ -- DATE:       September 29th 2010
+ --
+ --	REVISIONS:  (Date and Description)
+ -- 
+ --	DESIGNER:   Tom Nightingale
+ -- 
+ --	PROGRAMMER: Tom Nightingale
+ -- 
+ --	NOTES:      All messages sent to programs window are handled in this file. Also has wrapper function to connect, 
+ --             configure & initialize comm port.
+ --	
+ ----------------------------------------------------------------------------------------------------------------------*/
+
 #include "application.h"
 #include "session.h"
 #include "datalink.h"
+
+/*------------------------------------------------------------------------------------------------------------------ 
+ --	FUNCTION: WndProc 
+ -- 
+ --	DATE: September 29th, 2010 
+ -- 
+ --	REVISIONS:  (Date and Description)
+ -- 
+ --	DESIGNER:   Tom Nightingale
+ -- 
+ --	PROGRAMMER: Tom Nightingale
+ -- 
+ --	INTERFACE:  LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
+ --                 HWND hwnd
+ --                     A handle to the window.
+ --                 UINT Message
+ --                     The message.
+ --                 WPARAM wParam
+ --                     Additional message information. The contents of this parameter depend on the value of the 
+ --                     uMsg parameter.
+ --                 LPARAM lParam
+ --                     Additional message information. The contents of this parameter depend on the value of the 
+ --                     uMsg parameter.
+ -- 
+ --	RETURNS:    LRESULT - The return value is the result of the message processing and depends on the message sent.
+ -- 
+ --	NOTES:      Win32 api main message handling function. All messages come through here and action is taken.
+ --	
+ ----------------------------------------------------------------------------------------------------------------------*/
 
 LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
 	HDC hdc;
@@ -22,7 +75,6 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
 		case WM_COMMAND:
             pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
-            //if (state != COMMAND) {
             if (pWData->state != COMMAND) {
                 MessageBox (hwnd, TEXT("Need to be in COMMAND to change settings."), NULL, MB_ICONERROR);
                 break;
@@ -30,32 +82,26 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
 			switch (LOWORD (wParam)) {
           		case IDM_COM1:
-                    //hCom = ConnectComm(hwnd, TEXT("COM1"));
                     pWData->hCom = ConnectComm(hwnd, TEXT("COM1"));
 					break;
 				
 				case IDM_COM2:
-                    //hCom = ConnectComm(hwnd, TEXT("COM2"));
                     pWData->hCom = ConnectComm(hwnd, TEXT("COM2"));
 					break;
 
                 case IDM_COM3:
-                    //hCom = ConnectComm(hwnd, TEXT("COM3"));
                     pWData->hCom = ConnectComm(hwnd, TEXT("COM3"));
 					break;
 
                 case IDM_COM4:
-                    //hCom = ConnectComm(hwnd, TEXT("COM4"));
                     pWData->hCom = ConnectComm(hwnd, TEXT("COM4"));
 					break;
 
                 case IDM_COM5:
-                    //hCom = ConnectComm(hwnd, TEXT("COM5"));
                     pWData->hCom = ConnectComm(hwnd, TEXT("COM5"));
 					break;
 
                 case IDM_COM6:
-                    //hCom = ConnectComm(hwnd, TEXT("COM6"));
                     pWData->hCom = ConnectComm(hwnd, TEXT("COM6"));
 					break;
 
@@ -89,7 +135,6 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 				break;
             }
 
-            //Transmit(hCom, wParam);
             Transmit(pWData->hCom, wParam);
             if (!outputAddChar((TCHAR) wParam, &(pWData->output))) {
                 MessageBox(pWData->hwnd, TEXT("MASSIVE ERROR."), NULL, MB_ICONERROR);
@@ -124,6 +169,28 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
 	return 0;
 }
+
+
+/*------------------------------------------------------------------------------------------------------------------ 
+ --	FUNCTION: ConnectComm 
+ -- 
+ --	DATE: September 29th, 2010 
+ -- 
+ --	REVISIONS:  (Date and Description)
+ -- 
+ --	DESIGNER:   Tom Nightingale
+ -- 
+ --	PROGRAMMER: Tom Nightingale
+ -- 
+ --	INTERFACE:  ConnectComm(HWND hwnd, LPCWSTR lpFileName)
+ --                 HWND hwnd: The window.
+ --                 LPCWSTR lpFileName: The name of the Comm port.
+ -- 
+ --	RETURNS:    HANDLE: Handle to newly opened and configured Comm port.
+ -- 
+ --	NOTES:      Opens the desired Comm port via OpenPort() and then sets timeout & other protocol config.
+ --	
+ ----------------------------------------------------------------------------------------------------------------------*/
 
 HANDLE ConnectComm(HWND hwnd, LPCWSTR lpFileName) {
     HANDLE hCom;
@@ -160,6 +227,28 @@ HANDLE ConnectComm(HWND hwnd, LPCWSTR lpFileName) {
     return hCom;
 }
 
+
+/*------------------------------------------------------------------------------------------------------------------ 
+ --	FUNCTION: pollPort 
+ -- 
+ --	DATE: September 29th, 2010 
+ -- 
+ --	REVISIONS:  (Date and Description)
+ -- 
+ --	DESIGNER:   Tom Nightingale
+ -- 
+ --	PROGRAMMER: Tom Nightingale
+ -- 
+ --	INTERFACE:  pollPort(PWDATA pWData)
+ --                 PWDATA pWData: The window's stored data object.
+ -- 
+ --	RETURNS:    void.
+ -- 
+ --	NOTES:      Checks the open port for any new data, if received and not NULl, sends data to output string and calls 
+ --             a printOut to render it on screen.
+ --	
+ ----------------------------------------------------------------------------------------------------------------------*/
+
 void pollPort(PWDATA pWData) {
     HDC hdc;
     TCHAR readBuff = '\0';
@@ -183,6 +272,31 @@ void pollPort(PWDATA pWData) {
     ReleaseDC(pWData->hwnd, hdc);
 }
 
+
+/*------------------------------------------------------------------------------------------------------------------ 
+ --	FUNCTION: outputAddChar 
+ -- 
+ --	DATE: September 29th, 2010 
+ -- 
+ --	REVISIONS:  (Date and Description)
+ -- 
+ --	DESIGNER:   Tom Nightingale
+ -- 
+ --	PROGRAMMER: Tom Nightingale
+ -- 
+ --	INTERFACE:  outputAddChar(TCHAR c, POUTPUT pOutput)
+ --                 TCHAR c: A char to add to the output string.
+ --                 POUTPUT pOutput: The programs output string (dynamically resizing struct).
+ -- 
+ --	RETURNS:    BOOL.
+ --                 Returns true if char is added to string sucessfully.
+ --                 Returns false if if failed (probably due to failed memory allocation when resizing the string).   
+ -- 
+ --	NOTES:      Tries to add a char to the output string, if string is full, the string is doubled in size and then 
+ --             char is added.
+ --	
+ ----------------------------------------------------------------------------------------------------------------------*/
+
 BOOL outputAddChar(TCHAR c, POUTPUT pOutput) {
 	DWORD err;
 	TCHAR* tmp;
@@ -190,7 +304,6 @@ BOOL outputAddChar(TCHAR c, POUTPUT pOutput) {
     if (pOutput->pos == pOutput->size -1) {
         pOutput->size = pOutput->size * 2;
 
-		//tmp = (TCHAR*) LocalAlloc(LMEM_MOVEABLE, sizeof(TCHAR) * pOutput->size);
 		tmp = (TCHAR*) HeapReAlloc(GetProcessHeap(), HEAP_GENERATE_EXCEPTIONS, pOutput->out, sizeof(TCHAR) * pOutput->size);
 		if (tmp == NULL) {
 			err = GetLastError();

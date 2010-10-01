@@ -26,9 +26,6 @@ enum STATE {
 
 LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
 HANDLE ConnectComm(HWND hwnd, LPCWSTR lpFileName);
-BOOL StartReadThread(HANDLE hCom, PWDATA pWData);
-//BOOL ReadThread(PWDATA);
-//void EndThread(PWDATA);
 void pollPort(PWDATA pWData);
 BOOL outputAddChar(TCHAR c, POUTPUT pOutput);
 

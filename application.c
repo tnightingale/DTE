@@ -1,6 +1,50 @@
+/*------------------------------------------------------------------------------------------------------------------ 
+ --	SOURCE FILE: application.c - Handles visual presentation functionality.
+ -- 
+ --	PROGRAM: dte
+ -- 
+ -- Functions:  
+ --             void printOut(PWDATA pWData, HDC hdc)
+ --             void setMenu(HMENU menu, UINT uEnable)
+ --
+ -- DATE:       September 29th 2010
+ --
+ --	REVISIONS:  (Date and Description)
+ -- 
+ --	DESIGNER:   Tom Nightingale
+ -- 
+ --	PROGRAMMER: Tom Nightingale
+ -- 
+ --	NOTES:      Prints data stored in the data string (pWData->output.out) to display area. Handles formatting, 
+ --             newlines, etc. Math could do with a bit of work.
+ --	
+ ----------------------------------------------------------------------------------------------------------------------*/
+
 #include "application.h"
 #include "session.h"
 
+/*------------------------------------------------------------------------------------------------------------------ 
+ --	FUNCTION: printOut 
+ -- 
+ --	DATE: September 29th, 2010 
+ -- 
+ --	REVISIONS:  (Date and Description)
+ -- 
+ --	DESIGNER:   Tom Nightingale
+ -- 
+ --	PROGRAMMER: Tom Nightingale
+ -- 
+ --	INTERFACE:  printOut(PWDATA pWData, HDC hdc)
+ --                 PWDATA pWData: Program's window data storage struct containing the buffer string (output) and it's
+ --                                metadata.
+ --                 HDC hdc: Hardware device controller.
+ -- 
+ --	RETURNS:    void.
+ -- 
+ --	NOTES:      Prints data stored in the data string (pWData->output.out) to display area. Handles formatting, 
+ --             newlines, etc. Math could do with a bit of work.
+ --	
+ ----------------------------------------------------------------------------------------------------------------------*/
 void printOut(PWDATA pWData, HDC hdc) {
     TEXTMETRIC tm; 
     HFONT hFont;
@@ -29,6 +73,26 @@ void printOut(PWDATA pWData, HDC hdc) {
 	}
 }
 
+/*------------------------------------------------------------------------------------------------------------------ 
+ --	FUNCTION: setMenu 
+ -- 
+ --	DATE: September 29th, 2010 
+ -- 
+ --	REVISIONS:  (Date and Description)
+ -- 
+ --	DESIGNER:   Tom Nightingale
+ -- 
+ --	PROGRAMMER: Tom Nightingale
+ -- 
+ --	INTERFACE:  setMenu(HMENU menu, UINT uEnable
+ --                 HMENU menu: A win32 menu struct returned by GetMenu().
+ --                 UINIT uEnable: Option to be passed to EnableMenuItem. The setting to apply to the menu.
+ -- 
+ --	RETURNS:    void.
+ -- 
+ --	NOTES:      Sets all of the menu items to the value of uEnable.
+ --	
+ ----------------------------------------------------------------------------------------------------------------------*/
 void setMenu(HMENU menu, UINT uEnable) {
 	EnableMenuItem(menu, IDM_CONNECT, uEnable);
 	EnableMenuItem(menu, IDM_COM1, uEnable);

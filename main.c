@@ -1,6 +1,50 @@
+/*------------------------------------------------------------------------------------------------------------------ 
+ --	SOURCE FILE: main.c - Contains WinMain, initializes the program.
+ -- 
+ --	PROGRAM: dte
+ -- 
+ -- Functions:  
+ --             int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance, LPSTR lspszCmdParam, int nCmdShow)
+ --
+ -- DATE:       September 29th 2010
+ --
+ --	REVISIONS:  (Date and Description)
+ -- 
+ --	DESIGNER:   Tom Nightingale
+ -- 
+ --	PROGRAMMER: Tom Nightingale
+ -- 
+ --	NOTES:      Contains win32 main program initializing function WinMain(). Initiates message loop and handles 
+ --             calling dispatch on the messages.
+ --	
+ ----------------------------------------------------------------------------------------------------------------------*/
+
 #include "main.h"
 #include "session.h"
 
+
+/*------------------------------------------------------------------------------------------------------------------ 
+ --	FUNCTION: WinMain 
+ -- 
+ --	DATE: September 29th, 2010 
+ -- 
+ --	REVISIONS:  (Date and Description)
+ -- 
+ --	DESIGNER:   Tom Nightingale
+ -- 
+ --	PROGRAMMER: Tom Nightingale
+ -- 
+ --	INTERFACE:  WinMain(HINSTANCE hInst, HINSTANCE hprevInstance, LPSTR lspszCmdParam, int nCmdShow)
+ --                 HINSTANCE hInst
+ --                 HINSTANCE hprevInstance
+ --                 LPSTR lspszCmdParam
+ --                 int nCmdShow
+ -- 
+ --	RETURNS:    WINAPI.
+ -- 
+ --	NOTES:
+ --	
+ ----------------------------------------------------------------------------------------------------------------------*/
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance, LPSTR lspszCmdParam, int nCmdShow) {
 	HWND hwnd;
 	MSG Msg;
