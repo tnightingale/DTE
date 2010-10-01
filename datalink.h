@@ -3,4 +3,4 @@
 
 HANDLE OpenPort(LPCWSTR);
 int Transmit(HANDLE, TCHAR);
-BOOL Recieve(HANDLE, TCHAR*);
+TCHAR Recieve(HANDLE);

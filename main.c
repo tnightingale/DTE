@@ -50,8 +50,6 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance, LPSTR lspszCmdParam
 	MSG Msg;
 	WNDCLASSEX Wcl;
     PWDATA pWData;
-	HANDLE hHeap;
-	int i;
 
 	TCHAR Name[] = TEXT("Dumb Terminial Emulator");
 
@@ -88,18 +86,13 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance, LPSTR lspszCmdParam
         NULL
     );
 
-
-	hHeap = GetProcessHeap();
-    //pWData = (PWDATA) HeapAlloc(hHeap, HEAP_GENERATE_EXCEPTIONS, sizeof(PWDATA));
 	pWData = (PWDATA) malloc(sizeof(PWDATA));
-	pWData->hHeap = hHeap;
-	pWData->hwnd = hwnd;
     pWData->state = COMMAND;
 	
-	pWData->output.out = (TCHAR*) HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sizeof(TCHAR) * 8);
-    pWData->output.size = 8;
-    pWData->output.pos = 0;
-	FillMemory(pWData->output.out, pWData->output.size, ' ');
+    pWData->pOutput = (POUTPUT) malloc(sizeof(OUTPUT));
+	pWData->pOutput->out = (TCHAR*) malloc(8 * sizeof(TCHAR));
+    pWData->pOutput->size = 8;
+    pWData->pOutput->pos = 0;
 
     pWData->wnSize.cx = 0;
     pWData->wnSize.cy = 0;
@@ -119,7 +112,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance, LPSTR lspszCmdParam
         }
         else {
             if (pWData->state == CONNECT) {
-                pollPort(pWData);
+                pollPort(hwnd, pWData->hCom, pWData->pOutput);
             }
         }
 	}

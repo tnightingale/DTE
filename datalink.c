@@ -44,8 +44,6 @@
 HANDLE OpenPort(LPCWSTR lpFileName) {
 	HANDLE hCom;
 	DWORD err;
-	DWORD inQueue;
-	DWORD outQueue;
 
 	// Create handle
 	hCom = CreateFile (
@@ -127,15 +125,17 @@ int Transmit(HANDLE hCom, TCHAR c) {
  --	NOTES:     Reads from open port and writes chars to buffer.
  --	
  ----------------------------------------------------------------------------------------------------------------------*/
-BOOL Recieve(HANDLE hCom, TCHAR* readBuff) {
+TCHAR Recieve(HANDLE hCom) {
     DWORD dwBytesToRead = 1;
     DWORD dwBytesRead = 0;
+    TCHAR readBuff = '\0';
     DWORD err;
     
-    if(!ReadFile(hCom, readBuff, dwBytesToRead, &dwBytesRead, NULL)) {
+    if(!ReadFile(hCom, &readBuff, dwBytesToRead, &dwBytesRead, NULL)) {
         err = GetLastError();
-        return FALSE;
+        return NULL;
     }
 
-    return TRUE;
+
+    return (TCHAR) readBuff;
 }

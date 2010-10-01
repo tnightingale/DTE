@@ -45,32 +45,44 @@
  --             newlines, etc. Math could do with a bit of work.
  --	
  ----------------------------------------------------------------------------------------------------------------------*/
-void printOut(PWDATA pWData, HDC hdc) {
+void printOut(HWND hwnd, POUTPUT pOutput, HDC hdc) {
+    RECT rec;
     TEXTMETRIC tm; 
     HFONT hFont;
+    int cxClient, cyClient; // Window width and height.
+    int cxChar, cyChar;     // Char width and height.
+    int cxBuffer, cyBuffer; // Window width and height in Chars.
+    UINT x, y;               // Cursor column & line.
+    int pBufferSize;
+    TCHAR* pBuffer;         // Char rendering buffer.
 
-    UINT count = 0;
-    UINT cxChar = 0;
-    UINT cyChar = 0;
-    UINT numCharsLine = 0;
-	UINT numLines = 0;
-    UINT lineH = 0;
-
+    GetClientRect(hwnd, &rec);
     GetTextMetrics(hdc, &tm);
+
+    cxClient = rec.right;
+    cyClient = rec.bottom;
+    cxChar = tm.tmAveCharWidth;
+    cyChar = tm.tmHeight;
+    cxBuffer = max(1, cxClient / cxChar);
+    cyBuffer = max(1, cyClient / cyChar);
+    pBufferSize = cxBuffer * cyBuffer * sizeof(TCHAR);
+
+    pBuffer = (TCHAR*) malloc(pBufferSize);
+
+    for (x = 0; x < pBufferSize / sizeof(TCHAR); x++) {
+        if (x < pOutput->pos) {
+            pBuffer[x] = (pOutput->out)[x];
+        } else {
+            pBuffer[x] = ' ';
+        }
+    }
 
     hFont = (HFONT) GetStockObject(ANSI_FIXED_FONT);
     SelectObject(hdc, hFont);
-
-	numCharsLine = pWData->wnSize.cx / tm.tmAveCharWidth;
-	if (numCharsLine == 0) numCharsLine = 1;
-	numLines = pWData->output.pos / numCharsLine;
-
-	cyChar = tm.tmHeight + tm.tmExternalLeading;
-
-    //TextOut(hdc, 0, 0, pWData->output.out, pWData->output.pos);
-	for (count = 0; count < numLines + 1; count++) {
-		TextOut(hdc, 0, count * cyChar, pWData->output.out + count * numCharsLine, pWData->output.pos % numCharsLine);
-	}
+    for (y = 0 ; y < cyBuffer ; y++) {
+        TextOut (hdc, 0, y * cyChar, & BUFFER(0,y), cxBuffer);
+    }
+    
 }
 
 /*------------------------------------------------------------------------------------------------------------------ 

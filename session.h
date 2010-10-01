@@ -4,6 +4,8 @@
 #include <Windows.h>
 #include <tchar.h>
 
+#define BUFFER(x,y) *(pBuffer + y * cxBuffer + x)
+
 typedef struct _OUTPUT {
     TCHAR* out;
     int pos;
@@ -14,9 +16,7 @@ typedef struct _WDATA {
     SIZE wnSize;
     HANDLE hCom;
     enum STATE state;
-    HWND hwnd;
-    OUTPUT output;
-	HANDLE hHeap;
+    POUTPUT pOutput;
 } WDATA, *PWDATA;
 
 enum STATE {
@@ -26,7 +26,7 @@ enum STATE {
 
 LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
 HANDLE ConnectComm(HWND hwnd, LPCWSTR lpFileName);
-void pollPort(PWDATA pWData);
-BOOL outputAddChar(TCHAR c, POUTPUT pOutput);
+void pollPort(HWND hwnd, HANDLE hCom, POUTPUT pOutput);
+BOOL outputAddChar(TCHAR, POUTPUT pOutput);
 
 #endif

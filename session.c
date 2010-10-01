@@ -69,7 +69,7 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             pWData->wnSize.cy = HIWORD(lParam);
         
 			hdc = GetDC(hwnd);
-            printOut(pWData, hdc);
+            printOut(hwnd, pWData->pOutput, hdc);
 			ReleaseDC(hwnd, hdc);
             break;
 
@@ -108,7 +108,7 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 case IDM_CONNECT:
                     pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
 					if (pWData->hCom == INVALID_HANDLE_VALUE) {
-						MessageBox(pWData->hwnd, TEXT("You need to set a port before you can connect."), NULL, MB_ICONERROR);
+						MessageBox(hwnd, TEXT("You need to set a port before you can connect."), NULL, MB_ICONERROR);
 						break;
 					}
 						
@@ -120,6 +120,44 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 
+        case WM_KEYDOWN:
+            pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
+            switch (wParam) {
+                case VK_ESCAPE:
+                    if (pWData->state == CONNECT) {
+                        pWData->state = COMMAND;
+				        CloseHandle(pWData->hCom);
+				        menu = GetMenu(hwnd);
+				        setMenu(menu, MF_ENABLED);
+                    }
+				break;
+
+                case VK_DELETE:
+                    /*
+                    for (x = xCaret ; x < cxBuffer - 1 ; x++) {
+                        BUFFER (x, yCaret) = BUFFER (x + 1, yCaret);
+                    }
+               
+                    BUFFER (cxBuffer - 1, yCaret) = ' ' ;
+               
+                    HideCaret (hwnd) ;
+                    hdc = GetDC (hwnd) ;
+          
+                    SelectObject (hdc, CreateFont (0, 0, 0, 0, 0, 0, 0, 0,
+                                        dwCharSet, 0, 0, 0, FIXED_PITCH, NULL)) ;
+                    
+                    TextOut (hdc, xCaret * cxChar, yCaret * cyChar,
+                            & BUFFER (xCaret, yCaret),
+                            cxBuffer - xCaret) ;
+
+                    DeleteObject (SelectObject (hdc, GetStockObject (SYSTEM_FONT))) ;
+                    ReleaseDC (hwnd, hdc) ;
+                    ShowCaret (hwnd) ;
+                    */
+                    break;
+            }
+            break;
+        
         case WM_CHAR:
             pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
             
@@ -127,30 +165,32 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 break;
             }
 
-            if (wParam == VK_ESCAPE) {
-                pWData->state = COMMAND;
-				CloseHandle(pWData->hCom);
-				menu = GetMenu(hwnd);
-				setMenu(menu, MF_ENABLED);
-				break;
-            }
+            switch (wParam) {
+                case '\b': // backspace
+                    SendMessage (hwnd, WM_KEYDOWN, VK_DELETE, 1) ;
+                    
+                    // ^ 
+                    // |
+                    //FALL THROUGH;
+                    // |
+                    // v
 
-            Transmit(pWData->hCom, wParam);
-            if (!outputAddChar((TCHAR) wParam, &(pWData->output))) {
-                MessageBox(pWData->hwnd, TEXT("MASSIVE ERROR."), NULL, MB_ICONERROR);
-                CloseHandle(pWData->hCom);
-                PostQuitMessage(0);
+                default:
+                    Transmit(pWData->hCom, wParam);
+                    if (!outputAddChar((TCHAR) wParam, pWData->pOutput)) {
+                        MessageBox(hwnd, TEXT("MASSIVE ERROR."), NULL, MB_ICONERROR);
+                        CloseHandle(pWData->hCom);
+                        PostQuitMessage(0);
+                    }
+                    InvalidateRect(hwnd, NULL, FALSE) ;
             }
-            hdc = GetDC(hwnd);
-            printOut(pWData, hdc);
-            ReleaseDC(hwnd, hdc);
             break;
 
 		case WM_PAINT:		// Process a repaint message
 			pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
             hdc = BeginPaint (hwnd, &paintstruct); // Acquire DC            
            
-            printOut(pWData, hdc);
+            printOut(hwnd, pWData->pOutput, hdc);
 			
             EndPaint(hwnd, &paintstruct);
 		break;
@@ -214,11 +254,11 @@ HANDLE ConnectComm(HWND hwnd, LPCWSTR lpFileName) {
     if(!GetCommTimeouts(hCom, &CommTimeouts)) {
     }
 
-    CommTimeouts.ReadIntervalTimeout = 100;
+    CommTimeouts.ReadIntervalTimeout = 1;
     CommTimeouts.ReadTotalTimeoutMultiplier = 2;
     CommTimeouts.ReadTotalTimeoutConstant = 1000;
 
-    CommTimeouts.WriteTotalTimeoutMultiplier = 2;
+    CommTimeouts.WriteTotalTimeoutMultiplier = 1;
     CommTimeouts.WriteTotalTimeoutConstant = 1;
 
     SetCommTimeouts(hCom, &CommTimeouts);
@@ -249,27 +289,27 @@ HANDLE ConnectComm(HWND hwnd, LPCWSTR lpFileName) {
  --	
  ----------------------------------------------------------------------------------------------------------------------*/
 
-void pollPort(PWDATA pWData) {
+void pollPort(HWND hwnd, HANDLE hCom, POUTPUT pOutput) {
     HDC hdc;
-    TCHAR readBuff = '\0';
+    TCHAR readBuff;
 
-    if (!Recieve(pWData->hCom, &readBuff)) {
+    if ((readBuff = Recieve(hCom)) == NULL) {
         return;
     }
 
-    if (readBuff == (TCHAR) NULL) {
+    if (readBuff == '\0') {
         return;
     }
 
-    if (!outputAddChar(readBuff, &(pWData->output))) {
-        MessageBox (pWData->hwnd, TEXT("MASSIVE ERROR."), NULL, MB_ICONERROR);
-        CloseHandle(pWData->hCom);
+    if (!outputAddChar(readBuff, pOutput)) {
+        MessageBox (hwnd, TEXT("MASSIVE ERROR."), NULL, MB_ICONERROR);
+        CloseHandle(hCom);
         PostQuitMessage(0);
     }
 
-    hdc = GetDC(pWData->hwnd);
-    printOut(pWData, hdc);
-    ReleaseDC(pWData->hwnd, hdc);
+    hdc = GetDC(hwnd);
+    printOut(hwnd, pOutput, hdc);
+    ReleaseDC(hwnd, hdc);
 }
 
 
@@ -298,26 +338,17 @@ void pollPort(PWDATA pWData) {
  ----------------------------------------------------------------------------------------------------------------------*/
 
 BOOL outputAddChar(TCHAR c, POUTPUT pOutput) {
-	DWORD err;
-	TCHAR* tmp;
+    if (pOutput->pos == pOutput->size) {
+        pOutput->size = 2 * pOutput->size;
+        pOutput->out = (TCHAR*) realloc(pOutput->out, pOutput->size * sizeof(TCHAR));
 
-    if (pOutput->pos == pOutput->size -1) {
-        pOutput->size = pOutput->size * 2;
-
-		tmp = (TCHAR*) HeapReAlloc(GetProcessHeap(), HEAP_GENERATE_EXCEPTIONS, pOutput->out, sizeof(TCHAR) * pOutput->size);
-		if (tmp == NULL) {
-			err = GetLastError();
-			return FALSE;
-		}
-		FillMemory(tmp + pOutput->pos, pOutput->size - pOutput->pos, ' ');
-		pOutput->out = tmp;
-
-        if (pOutput->out == NULL) {
+        if (!pOutput->out) {
             return FALSE;
         }
     }
 
-    pOutput->out[pOutput->pos++] = c;
+    pOutput->out[pOutput->pos] = c;
+    pOutput->pos++;
 
     return TRUE;
 }
