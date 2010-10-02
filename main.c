@@ -88,6 +88,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance, LPSTR lspszCmdParam
 
 	pWData = (PWDATA) malloc(sizeof(PWDATA));
     pWData->state = COMMAND;
+    pWData->hCom = INVALID_HANDLE_VALUE;
 	
     pWData->pOutput = (POUTPUT) malloc(sizeof(OUTPUT));
 	pWData->pOutput->out = (TCHAR*) malloc(8 * sizeof(TCHAR));

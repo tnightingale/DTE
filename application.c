@@ -52,17 +52,21 @@ void printOut(HWND hwnd, POUTPUT pOutput, HDC hdc) {
     int cxClient, cyClient; // Window width and height.
     int cxChar, cyChar;     // Char width and height.
     int cxBuffer, cyBuffer; // Window width and height in Chars.
-    UINT x, y;               // Cursor column & line.
+    UINT x, y;           // Cursor column & line.
     int pBufferSize;
     TCHAR* pBuffer;         // Char rendering buffer.
+
+    hFont = (HFONT) GetStockObject(ANSI_FIXED_FONT);
+    SelectObject(hdc, hFont);
 
     GetClientRect(hwnd, &rec);
     GetTextMetrics(hdc, &tm);
 
     cxClient = rec.right;
     cyClient = rec.bottom;
-    cxChar = tm.tmAveCharWidth;
+    cxChar = tm.tmMaxCharWidth;
     cyChar = tm.tmHeight;
+
     cxBuffer = max(1, cxClient / cxChar);
     cyBuffer = max(1, cyClient / cyChar);
     pBufferSize = cxBuffer * cyBuffer * sizeof(TCHAR);
@@ -77,10 +81,8 @@ void printOut(HWND hwnd, POUTPUT pOutput, HDC hdc) {
         }
     }
 
-    hFont = (HFONT) GetStockObject(ANSI_FIXED_FONT);
-    SelectObject(hdc, hFont);
-    for (y = 0 ; y < cyBuffer ; y++) {
-        TextOut (hdc, 0, y * cyChar, & BUFFER(0,y), cxBuffer);
+    for (y = 0, x = 0 ; y < cyBuffer ; y++) {
+        TextOut (hdc, 0, y * cyChar, & BUFFER(x,y), cxBuffer);
     }
     
 }

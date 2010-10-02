@@ -129,32 +129,13 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 				        CloseHandle(pWData->hCom);
 				        menu = GetMenu(hwnd);
 				        setMenu(menu, MF_ENABLED);
+                        InvalidateRect(hwnd, NULL, FALSE);
                     }
 				break;
 
-                case VK_DELETE:
-                    /*
-                    for (x = xCaret ; x < cxBuffer - 1 ; x++) {
-                        BUFFER (x, yCaret) = BUFFER (x + 1, yCaret);
-                    }
-               
-                    BUFFER (cxBuffer - 1, yCaret) = ' ' ;
-               
-                    HideCaret (hwnd) ;
-                    hdc = GetDC (hwnd) ;
-          
-                    SelectObject (hdc, CreateFont (0, 0, 0, 0, 0, 0, 0, 0,
-                                        dwCharSet, 0, 0, 0, FIXED_PITCH, NULL)) ;
-                    
-                    TextOut (hdc, xCaret * cxChar, yCaret * cyChar,
-                            & BUFFER (xCaret, yCaret),
-                            cxBuffer - xCaret) ;
-
-                    DeleteObject (SelectObject (hdc, GetStockObject (SYSTEM_FONT))) ;
-                    ReleaseDC (hwnd, hdc) ;
-                    ShowCaret (hwnd) ;
-                    */
-                    break;
+                //case VK_DELETE:
+                //    
+                //    break;
             }
             break;
         
@@ -240,6 +221,10 @@ HANDLE ConnectComm(HWND hwnd, LPCWSTR lpFileName) {
     COMMTIMEOUTS CommTimeouts;
 
     hCom = OpenPort(lpFileName);
+    if (hCom == INVALID_HANDLE_VALUE) {
+	    MessageBox(hwnd, TEXT("Could not connect to port."), NULL, MB_ICONERROR);
+		return INVALID_HANDLE_VALUE;
+	}
 
     cc.dwSize = sizeof(COMMCONFIG);
     GetCommConfig(hCom, &cc, &cc.dwSize);
@@ -248,18 +233,19 @@ HANDLE ConnectComm(HWND hwnd, LPCWSTR lpFileName) {
     success = SetCommState(hCom, &cc.dcb);
 	if (!success) {
 	    err = GetLastError();
-		return NULL;
+		return INVALID_HANDLE_VALUE;
 	}
 
     if(!GetCommTimeouts(hCom, &CommTimeouts)) {
+        return INVALID_HANDLE_VALUE;
     }
 
     CommTimeouts.ReadIntervalTimeout = 1;
-    CommTimeouts.ReadTotalTimeoutMultiplier = 2;
-    CommTimeouts.ReadTotalTimeoutConstant = 1000;
+    CommTimeouts.ReadTotalTimeoutMultiplier = 1;
+    CommTimeouts.ReadTotalTimeoutConstant = 1;
 
-    CommTimeouts.WriteTotalTimeoutMultiplier = 1;
-    CommTimeouts.WriteTotalTimeoutConstant = 1;
+    CommTimeouts.WriteTotalTimeoutMultiplier = 100;
+    CommTimeouts.WriteTotalTimeoutConstant = 100;
 
     SetCommTimeouts(hCom, &CommTimeouts);
 
