@@ -96,7 +96,11 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
             pWData->cursor.cxBuffer = max(1, LOWORD(lParam) / pWData->cursor.cxChar);
             pWData->cursor.cyBuffer = max(1, HIWORD(lParam) / pWData->cursor.cyChar);
-        
+            
+            pWData->cursor.xCaret = pWData->pOutput->pos % pWData->cursor.cxBuffer;
+            pWData->cursor.yCaret = max(0, pWData->pOutput->pos / pWData->cursor.cxBuffer);
+			SetCaretPos(pWData->cursor.xCaret * pWData->cursor.cxChar, pWData->cursor.yCaret * pWData->cursor.cyChar);
+
             InvalidateRect(hwnd, NULL, FALSE);
 			ReleaseDC(hwnd, hdc);
             break;
@@ -226,7 +230,7 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             hFont = (HFONT) GetStockObject(ANSI_FIXED_FONT);
             SelectObject(hdc, hFont);  
             printOut(hwnd, &pWData->cursor, pWData->pOutput, hdc);
-			
+
             EndPaint(hwnd, &paintstruct);
 		break;
 
