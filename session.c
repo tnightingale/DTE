@@ -60,16 +60,26 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 	PAINTSTRUCT paintstruct;
     PWDATA pWData;
 	HMENU menu;
+    TEXTMETRIC tm;
+    HFONT hFont;
+    int i;
 
 	switch (Message) {
 
         case WM_SIZE:
+            hdc = GetDC(hwnd);
+            hFont = (HFONT) GetStockObject(ANSI_FIXED_FONT);
+            SelectObject(hdc, hFont);
+            GetTextMetrics(hdc, &tm);
             pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
-            pWData->wnSize.cx = LOWORD(lParam);
-            pWData->wnSize.cy = HIWORD(lParam);
+
+            pWData->cursor.cxChar = tm.tmMaxCharWidth;
+            pWData->cursor.cyChar = tm.tmHeight;
+
+            pWData->cursor.cxBuffer = max(1, LOWORD(lParam) / pWData->cursor.cxChar);
+            pWData->cursor.cyBuffer = max(1, HIWORD(lParam) / pWData->cursor.cyChar);
         
-			hdc = GetDC(hwnd);
-            printOut(hwnd, pWData->pOutput, hdc);
+            InvalidateRect(hwnd, NULL, FALSE);
 			ReleaseDC(hwnd, hdc);
             break;
 
@@ -127,6 +137,7 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                     if (pWData->state == CONNECT) {
                         pWData->state = COMMAND;
 				        CloseHandle(pWData->hCom);
+                        pWData->hCom = INVALID_HANDLE_VALUE;
 				        menu = GetMenu(hwnd);
 				        setMenu(menu, MF_ENABLED);
                         InvalidateRect(hwnd, NULL, FALSE);
@@ -146,32 +157,43 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                 break;
             }
 
-            switch (wParam) {
-                case '\b': // backspace
-                    SendMessage (hwnd, WM_KEYDOWN, VK_DELETE, 1) ;
+            for (i = 0; i < (int) LOWORD(lParam); i++) {
+                switch (wParam) {
+                    case '\b': // backspace
+                        SendMessage (hwnd, WM_KEYDOWN, VK_DELETE, 1) ;
                     
-                    // ^ 
-                    // |
-                    //FALL THROUGH;
-                    // |
-                    // v
+                        // ^ 
+                        // |
+                        //FALL THROUGH;
+                        // |
+                        // v
 
-                default:
-                    Transmit(pWData->hCom, wParam);
-                    if (!outputAddChar((TCHAR) wParam, pWData->pOutput)) {
-                        MessageBox(hwnd, TEXT("MASSIVE ERROR."), NULL, MB_ICONERROR);
-                        CloseHandle(pWData->hCom);
-                        PostQuitMessage(0);
-                    }
-                    InvalidateRect(hwnd, NULL, FALSE) ;
+                    default:
+                        Transmit(pWData->hCom, wParam);
+                        if (!outputAddChar((TCHAR) wParam, pWData->pOutput)) {
+                            MessageBox(hwnd, TEXT("MASSIVE ERROR."), NULL, MB_ICONERROR);
+                            CloseHandle(pWData->hCom);
+                            PostQuitMessage(0);
+                        }
+                        //InvalidateRect(hwnd, NULL, FALSE);
+                        hdc = GetDC(hwnd);
+                        hFont = (HFONT) GetStockObject(ANSI_FIXED_FONT);
+                        SelectObject(hdc, hFont);
+                        printChar(hwnd, &pWData->cursor, pWData->pOutput, hdc);
+                        ReleaseDC(hwnd, hdc);
+                        pWData->cursor.xCaret = ++pWData->cursor.xCaret % pWData->cursor.cxBuffer;
+                        pWData->cursor.yCaret = max(0, pWData->pOutput->pos / pWData->cursor.cxBuffer);
+                }
             }
             break;
 
 		case WM_PAINT:		// Process a repaint message
 			pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
-            hdc = BeginPaint (hwnd, &paintstruct); // Acquire DC            
-           
-            printOut(hwnd, pWData->pOutput, hdc);
+            hdc = BeginPaint(hwnd, &paintstruct); // Acquire DC            
+            
+            hFont = (HFONT) GetStockObject(ANSI_FIXED_FONT);
+            SelectObject(hdc, hFont);  
+            printOut(hwnd, &pWData->cursor, pWData->pOutput, hdc);
 			
             EndPaint(hwnd, &paintstruct);
 		break;
@@ -275,11 +297,12 @@ HANDLE ConnectComm(HWND hwnd, LPCWSTR lpFileName) {
  --	
  ----------------------------------------------------------------------------------------------------------------------*/
 
-void pollPort(HWND hwnd, HANDLE hCom, POUTPUT pOutput) {
+void pollPort(HWND hwnd, PWDATA pWData) {
     HDC hdc;
+    HFONT hFont;
     TCHAR readBuff;
 
-    if ((readBuff = Recieve(hCom)) == NULL) {
+    if ((readBuff = Recieve(pWData->hCom)) == NULL) {
         return;
     }
 
@@ -287,15 +310,20 @@ void pollPort(HWND hwnd, HANDLE hCom, POUTPUT pOutput) {
         return;
     }
 
-    if (!outputAddChar(readBuff, pOutput)) {
+    if (!outputAddChar(readBuff, pWData->pOutput)) {
         MessageBox (hwnd, TEXT("MASSIVE ERROR."), NULL, MB_ICONERROR);
-        CloseHandle(hCom);
+        CloseHandle(pWData->hCom);
         PostQuitMessage(0);
     }
 
+    //InvalidateRect(hwnd, NULL, FALSE);
     hdc = GetDC(hwnd);
-    printOut(hwnd, pOutput, hdc);
+    hFont = (HFONT) GetStockObject(ANSI_FIXED_FONT);
+    SelectObject(hdc, hFont);
+    printChar(hwnd, &pWData->cursor, pWData->pOutput, hdc);
     ReleaseDC(hwnd, hdc);
+    pWData->cursor.xCaret = ++pWData->cursor.xCaret % pWData->cursor.cxBuffer;
+    pWData->cursor.yCaret = max(0, pWData->pOutput->pos / pWData->cursor.cxBuffer);
 }
 
 
@@ -324,13 +352,19 @@ void pollPort(HWND hwnd, HANDLE hCom, POUTPUT pOutput) {
  ----------------------------------------------------------------------------------------------------------------------*/
 
 BOOL outputAddChar(TCHAR c, POUTPUT pOutput) {
-    if (pOutput->pos == pOutput->size) {
+    int i;
+
+    if (pOutput->pos == pOutput->size - 1) {
         pOutput->size = 2 * pOutput->size;
         pOutput->out = (TCHAR*) realloc(pOutput->out, pOutput->size * sizeof(TCHAR));
 
         if (!pOutput->out) {
             return FALSE;
         }
+    }
+
+    for (i = pOutput->pos + 1; i < pOutput->size; i++) {
+        pOutput->out[i] = ' ';
     }
 
     pOutput->out[pOutput->pos] = c;

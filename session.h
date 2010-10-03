@@ -4,7 +4,16 @@
 #include <Windows.h>
 #include <tchar.h>
 
-#define BUFFER(x,y) *(pBuffer + y * cxBuffer + x)
+#define BUFFER(x, y) *(pBuffer + y * pCursor->cxBuffer + x)
+
+typedef struct _CURSOR {
+    int xCaret;
+    int yCaret;
+    int cxBuffer;
+    int cyBuffer;
+    int cxChar;
+    int cyChar;
+} CURSOR, *PCURSOR;
 
 typedef struct _OUTPUT {
     TCHAR* out;
@@ -13,10 +22,10 @@ typedef struct _OUTPUT {
 } OUTPUT, *POUTPUT;
 
 typedef struct _WDATA {
-    SIZE wnSize;
     HANDLE hCom;
     enum STATE state;
     POUTPUT pOutput;
+    CURSOR cursor;
 } WDATA, *PWDATA;
 
 enum STATE {
@@ -25,8 +34,8 @@ enum STATE {
 };
 
 LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
-HANDLE ConnectComm(HWND hwnd, LPCWSTR lpFileName);
-void pollPort(HWND hwnd, HANDLE hCom, POUTPUT pOutput);
-BOOL outputAddChar(TCHAR, POUTPUT pOutput);
+HANDLE ConnectComm(HWND, LPCWSTR);
+void pollPort(HWND, PWDATA);
+BOOL outputAddChar(TCHAR, POUTPUT);
 
 #endif

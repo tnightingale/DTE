@@ -1,4 +1,4 @@
-/*------------------------------------------------------------------------------------------------------------------ 
+/*---------------------------------------------------------------------------------------------------------------------
  --	SOURCE FILE: application.c - Handles visual presentation functionality.
  -- 
  --	PROGRAM: dte
@@ -23,7 +23,7 @@
 #include "application.h"
 #include "session.h"
 
-/*------------------------------------------------------------------------------------------------------------------ 
+/*--------------------------------------------------------------------------------------------------------------------- 
  --	FUNCTION: printOut 
  -- 
  --	DATE: September 29th, 2010 
@@ -45,31 +45,12 @@
  --             newlines, etc. Math could do with a bit of work.
  --	
  ----------------------------------------------------------------------------------------------------------------------*/
-void printOut(HWND hwnd, POUTPUT pOutput, HDC hdc) {
-    RECT rec;
-    TEXTMETRIC tm; 
-    HFONT hFont;
-    int cxClient, cyClient; // Window width and height.
-    int cxChar, cyChar;     // Char width and height.
-    int cxBuffer, cyBuffer; // Window width and height in Chars.
+void printOut(HWND hwnd, PCURSOR pCursor, POUTPUT pOutput, HDC hdc) {
     UINT x, y;           // Cursor column & line.
     int pBufferSize;
     TCHAR* pBuffer;         // Char rendering buffer.
 
-    hFont = (HFONT) GetStockObject(ANSI_FIXED_FONT);
-    SelectObject(hdc, hFont);
-
-    GetClientRect(hwnd, &rec);
-    GetTextMetrics(hdc, &tm);
-
-    cxClient = rec.right;
-    cyClient = rec.bottom;
-    cxChar = tm.tmMaxCharWidth;
-    cyChar = tm.tmHeight;
-
-    cxBuffer = max(1, cxClient / cxChar);
-    cyBuffer = max(1, cyClient / cyChar);
-    pBufferSize = cxBuffer * cyBuffer * sizeof(TCHAR);
+    pBufferSize = pCursor->cxBuffer * pCursor->cyBuffer * sizeof(TCHAR);
 
     pBuffer = (TCHAR*) malloc(pBufferSize);
 
@@ -81,13 +62,30 @@ void printOut(HWND hwnd, POUTPUT pOutput, HDC hdc) {
         }
     }
 
-    for (y = 0, x = 0 ; y < cyBuffer ; y++) {
-        TextOut (hdc, 0, y * cyChar, & BUFFER(x,y), cxBuffer);
+    for (y = 0; y < pCursor->cyBuffer ; y++) {
+        TextOut (hdc, 0, y * pCursor->cyChar, &BUFFER(0, y), pCursor->cxBuffer);
     }
     
 }
 
-/*------------------------------------------------------------------------------------------------------------------ 
+/*---------------------------------------------------------------------------------------------------------------------
+ --
+ --
+ --
+ --
+ ----------------------------------------------------------------------------------------------------------------------*/
+void printChar(HWND hwnd, PCURSOR pCursor, POUTPUT pOutput, HDC hdc) {
+    int x, y;
+    TCHAR index;
+
+    x = pCursor->xCaret * pCursor->cxChar;
+    y = pCursor->yCaret * pCursor->cyChar;
+    index = *(pOutput->out + (pOutput->pos - 1));
+
+    TextOut(hdc, x, y, &index, 1);
+}
+
+/*--------------------------------------------------------------------------------------------------------------------- 
  --	FUNCTION: setMenu 
  -- 
  --	DATE: September 29th, 2010 

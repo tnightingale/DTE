@@ -1,3 +1,5 @@
 #include <windows.h>
 
+#define OUTPUTBUFFSIZE 128
+
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);

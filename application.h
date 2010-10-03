@@ -12,5 +12,6 @@
 #define IDM_COM5		113
 #define IDM_COM6		114
 
-void printOut(HWND hwnd, POUTPUT pOutput, HDC hdc);
+void printOut(HWND, PCURSOR, POUTPUT, HDC);
+void printChar(HWND, PCURSOR, POUTPUT, HDC);
 void setMenu(HMENU, UINT);

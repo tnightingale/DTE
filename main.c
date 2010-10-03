@@ -50,6 +50,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance, LPSTR lspszCmdParam
 	MSG Msg;
 	WNDCLASSEX Wcl;
     PWDATA pWData;
+    int i;
 
 	TCHAR Name[] = TEXT("Dumb Terminial Emulator");
 
@@ -91,14 +92,22 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance, LPSTR lspszCmdParam
     pWData->hCom = INVALID_HANDLE_VALUE;
 	
     pWData->pOutput = (POUTPUT) malloc(sizeof(OUTPUT));
-	pWData->pOutput->out = (TCHAR*) malloc(8 * sizeof(TCHAR));
-    pWData->pOutput->size = 8;
+    pWData->pOutput->size = OUTPUTBUFFSIZE;
     pWData->pOutput->pos = 0;
+    pWData->pOutput->out = (TCHAR*) malloc(pWData->pOutput->size * sizeof(TCHAR));
 
-    pWData->wnSize.cx = 0;
-    pWData->wnSize.cy = 0;
+    for (i = 0; i < pWData->pOutput->size; i++) {
+        pWData->pOutput->out[i] = ' ';
+    }
 
-    SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG) pWData);
+    pWData->cursor.xCaret = 0;
+    pWData->cursor.yCaret = 0;
+    pWData->cursor.cxBuffer = 0;
+    pWData->cursor.cyBuffer = 0;
+    pWData->cursor.cxChar = 0;
+    pWData->cursor.cyChar = 0;
+
+    SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) pWData);
 
     ShowWindow(hwnd, nCmdShow);
 	UpdateWindow(hwnd);
@@ -113,7 +122,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance, LPSTR lspszCmdParam
         }
         else {
             if (pWData->state == CONNECT) {
-                pollPort(hwnd, pWData->hCom, pWData->pOutput);
+                pollPort(hwnd, pWData);
             }
         }
 	}
