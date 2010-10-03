@@ -87,19 +87,25 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance, LPSTR lspszCmdParam
         NULL
     );
 
+    // Create window storage struct.
 	pWData = (PWDATA) malloc(sizeof(PWDATA));
-    pWData->state = COMMAND;
-    pWData->hCom = INVALID_HANDLE_VALUE;
+    
+    // Set default window storage values.
+    pWData->state = COMMAND;                // Program state.
+    pWData->hCom = INVALID_HANDLE_VALUE;    // Comm port handle.
 	
+    // Prepare output storage struct.
     pWData->pOutput = (POUTPUT) malloc(sizeof(OUTPUT));
     pWData->pOutput->size = OUTPUTBUFFSIZE;
     pWData->pOutput->pos = 0;
     pWData->pOutput->out = (TCHAR*) malloc(pWData->pOutput->size * sizeof(TCHAR));
 
+    // Initially white-out the output buffer.
     for (i = 0; i < pWData->pOutput->size; i++) {
         pWData->pOutput->out[i] = ' ';
     }
 
+    // Set up the cursor struct with default values.
     pWData->cursor.xCaret = 0;
     pWData->cursor.yCaret = 0;
     pWData->cursor.cxBuffer = 0;
@@ -107,11 +113,18 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance, LPSTR lspszCmdParam
     pWData->cursor.cxChar = 0;
     pWData->cursor.cyChar = 0;
 
+    // Set window struct to the window.
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) pWData);
 
     ShowWindow(hwnd, nCmdShow);
 	UpdateWindow(hwnd);
 
+    // Message handling uses PeekMessage() instead of GetMessage.
+    // Essentially this will handle all messages when they arrive
+    // on the queue. But whenever the queue is empty, poll the 
+    // serial port.
+    // This provides us with a very clean method of constantly polling the 
+    // open serial port with out jamming the program.
 	while (TRUE) {
         if (PeekMessage(&Msg, NULL, 0, 0, PM_REMOVE)) {
             if (Msg.message == WM_QUIT) {
@@ -122,6 +135,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance, LPSTR lspszCmdParam
         }
         else {
             if (pWData->state == CONNECT) {
+                // If no messages, poll the open serial port.
                 pollPort(hwnd, pWData);
             }
         }

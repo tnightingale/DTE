@@ -66,15 +66,33 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
 	switch (Message) {
 
-        case WM_SIZE:
+        case WM_SETFOCUS:
             hdc = GetDC(hwnd);
             hFont = (HFONT) GetStockObject(ANSI_FIXED_FONT);
             SelectObject(hdc, hFont);
             GetTextMetrics(hdc, &tm);
             pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
-
+            
             pWData->cursor.cxChar = tm.tmMaxCharWidth;
             pWData->cursor.cyChar = tm.tmHeight;
+
+            if (pWData->state == CONNECT) {
+                // Create a solid black caret. 
+                CreateCaret(hwnd, NULL, 2, pWData->cursor.cyChar); 
+                SetCaretPos(pWData->cursor.xCaret * pWData->cursor.cxChar, pWData->cursor.yCaret * pWData->cursor.cyChar);
+                // Display the caret. 
+                ShowCaret(hwnd);
+            }
+            break;
+
+        case WM_KILLFOCUS: 
+            // The window is losing the keyboard focus, so destroy the caret. 
+            DestroyCaret(); 
+            break;
+
+        case WM_SIZE:
+            hdc = GetDC(hwnd);
+            pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
 
             pWData->cursor.cxBuffer = max(1, LOWORD(lParam) / pWData->cursor.cxChar);
             pWData->cursor.cyBuffer = max(1, HIWORD(lParam) / pWData->cursor.cyChar);
@@ -126,6 +144,10 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 					
 					menu = GetMenu(hwnd);
 					setMenu(menu, MF_GRAYED);
+
+                    CreateCaret(hwnd, NULL, 2, pWData->cursor.cyChar);
+                    SetCaretPos(pWData->cursor.xCaret * pWData->cursor.cxChar, pWData->cursor.yCaret * pWData->cursor.cyChar);
+                    ShowCaret(hwnd);
                     break;
 			}
 			break;
@@ -141,6 +163,7 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 				        menu = GetMenu(hwnd);
 				        setMenu(menu, MF_ENABLED);
                         InvalidateRect(hwnd, NULL, FALSE);
+                        DestroyCaret();
                     }
 				break;
 
@@ -169,20 +192,28 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
                         // v
 
                     default:
+                        HideCaret(hwnd);
                         Transmit(pWData->hCom, wParam);
                         if (!outputAddChar((TCHAR) wParam, pWData->pOutput)) {
                             MessageBox(hwnd, TEXT("MASSIVE ERROR."), NULL, MB_ICONERROR);
                             CloseHandle(pWData->hCom);
                             PostQuitMessage(0);
                         }
-                        //InvalidateRect(hwnd, NULL, FALSE);
+
+                        // Prepare for printing.
                         hdc = GetDC(hwnd);
                         hFont = (HFONT) GetStockObject(ANSI_FIXED_FONT);
                         SelectObject(hdc, hFont);
+                        
+                        // Print character.
                         printChar(hwnd, &pWData->cursor, pWData->pOutput, hdc);
                         ReleaseDC(hwnd, hdc);
+                        
+                        // Increment caret position.
                         pWData->cursor.xCaret = ++pWData->cursor.xCaret % pWData->cursor.cxBuffer;
                         pWData->cursor.yCaret = max(0, pWData->pOutput->pos / pWData->cursor.cxBuffer);
+                        SetCaretPos(pWData->cursor.xCaret * pWData->cursor.cxChar, pWData->cursor.yCaret * pWData->cursor.cyChar);
+                        ShowCaret(hwnd);
                 }
             }
             break;
@@ -191,6 +222,7 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 			pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
             hdc = BeginPaint(hwnd, &paintstruct); // Acquire DC            
             
+            // Prepare for painting output.
             hFont = (HFONT) GetStockObject(ANSI_FIXED_FONT);
             SelectObject(hdc, hFont);  
             printOut(hwnd, &pWData->cursor, pWData->pOutput, hdc);
@@ -316,12 +348,16 @@ void pollPort(HWND hwnd, PWDATA pWData) {
         PostQuitMessage(0);
     }
 
-    //InvalidateRect(hwnd, NULL, FALSE);
+    // Prepare to print character.
     hdc = GetDC(hwnd);
     hFont = (HFONT) GetStockObject(ANSI_FIXED_FONT);
     SelectObject(hdc, hFont);
+
+    // Print character.
     printChar(hwnd, &pWData->cursor, pWData->pOutput, hdc);
     ReleaseDC(hwnd, hdc);
+
+    // Repostion caret.
     pWData->cursor.xCaret = ++pWData->cursor.xCaret % pWData->cursor.cxBuffer;
     pWData->cursor.yCaret = max(0, pWData->pOutput->pos / pWData->cursor.cxBuffer);
 }
