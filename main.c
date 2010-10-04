@@ -14,9 +14,11 @@
  -- 
  --	PROGRAMMER: Tom Nightingale
  -- 
- --	NOTES:      Contains win32 main program initializing function WinMain(). Initiates message loop and handles 
- --             calling dispatch on the messages.
- --	
+ --	NOTES:      Contains win32 entry point, main function WinMain(). Initiates message loop and translate's and 
+ --             dispatches received messages to Session.c WndProc().
+ --             The message loop uses PeekMessage to check if messages exist in the queue before performing any 
+ --             handling. This technique allows the program to handle the polling of an open serial port only when there
+ --             are no messages to be handled. Ensuring a smooth running application.
  ----------------------------------------------------------------------------------------------------------------------*/
 
 #include "main.h"

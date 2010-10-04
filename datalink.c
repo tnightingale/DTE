@@ -16,7 +16,7 @@
  -- 
  --	PROGRAMMER: Tom Nightingale
  -- 
- --	NOTES:      Functions to create, transmit and recieve raw data on the port.
+ --	NOTES:      Serial port specific functions to open, transmit and recieve raw data on the port.
  --	
  ----------------------------------------------------------------------------------------------------------------------*/
 

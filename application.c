@@ -16,9 +16,9 @@
  -- 
  --	PROGRAMMER: Tom Nightingale
  -- 
- --	NOTES:      Prints data stored in the data string (pWData->output.out) to display area. Handles formatting, 
- --             newlines, etc. Math could do with a bit of work.
- --	
+ --	NOTES:      Handles rendering of program visual interface to display. Functions create menus and print data stored 
+ --             in the output buffer to display area. 
+ --             Formatting, position and other visual aspects are handled in this layer.	
  ----------------------------------------------------------------------------------------------------------------------*/
 
 #include "application.h"

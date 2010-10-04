@@ -17,9 +17,10 @@
  -- 
  --	PROGRAMMER: Tom Nightingale
  -- 
- --	NOTES:      All messages sent to programs window are handled in this file. Also has wrapper function to connect, 
- --             configure & initialize comm port.
- --	
+ --	NOTES:      All Windows events are handled in this layer. Received events are passed to their associated handler
+ --             where any necessary processing is done before being passed on to one of the output layers. 
+ --             Serial port transmitting and receiving goes to datalink.c, rendering and painting of received characters
+ --             goes to application.c.
  ----------------------------------------------------------------------------------------------------------------------*/
 
 #include "application.h"
