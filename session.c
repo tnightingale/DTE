@@ -5,9 +5,9 @@
  -- 
  -- Functions:  
  --             LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
- --             HANDLE ConnectComm(HWND hwnd, LPCWSTR lpFileName);
- --             void pollPort(PWDATA pWData);
- --             BOOL outputAddChar(TCHAR c, POUTPUT pOutput);
+ --             HANDLE ConnectComm(HWND, LPCWSTR);
+ --             void pollPort(HWND, PWDATA);
+ --             BOOL outputAddChar(TCHAR, POUTPUT);
  --
  -- DATE:       September 29th 2010
  --
@@ -139,16 +139,19 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
                 case IDM_CONNECT:
                     pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
-					if (pWData->hCom == INVALID_HANDLE_VALUE) {
+					// Only connect when a valid Comm port is open.
+                    if (pWData->hCom == INVALID_HANDLE_VALUE) {
 						MessageBox(hwnd, TEXT("You need to set a port before you can connect."), NULL, MB_ICONERROR);
 						break;
 					}
 						
 					pWData->state = CONNECT;
 					
+                    // Disable menu items.
 					menu = GetMenu(hwnd);
 					setMenu(menu, MF_GRAYED);
 
+                    // Enable caret.
                     CreateCaret(hwnd, NULL, 2, pWData->cursor.cyChar);
                     SetCaretPos(pWData->cursor.xCaret * pWData->cursor.cxChar, pWData->cursor.yCaret * pWData->cursor.cyChar);
                     ShowCaret(hwnd);
@@ -160,6 +163,7 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
             switch (wParam) {
                 case VK_ESCAPE:
+                    // If in CONNECT mode, ESC will disconnect Comm port.
                     if (pWData->state == CONNECT) {
                         pWData->state = COMMAND;
 				        CloseHandle(pWData->hCom);
@@ -180,10 +184,13 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
         case WM_CHAR:
             pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
             
+            // Only repond to keystrokes when in CONNECT mode.
             if (pWData->state != CONNECT) {
                 break;
             }
 
+            // LOWORD(lParam) contains the number of keystrokes received (in the case of 
+            // a key being held down).
             for (i = 0; i < (int) LOWORD(lParam); i++) {
                 switch (wParam) {
                     case '\b': // backspace
@@ -197,7 +204,11 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
                     default:
                         HideCaret(hwnd);
+
+                        // Send Char out to Comm port.
                         Transmit(pWData->hCom, wParam);
+
+                        // Add Char to Outpu buffer.
                         if (!outputAddChar((TCHAR) wParam, pWData->pOutput)) {
                             MessageBox(hwnd, TEXT("MASSIVE ERROR."), NULL, MB_ICONERROR);
                             CloseHandle(pWData->hCom);
@@ -222,7 +233,8 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             }
             break;
 
-		case WM_PAINT:		// Process a repaint message
+		case WM_PAINT:		
+            // Process a repaint message
 			pWData = (PWDATA) GetWindowLongPtr(hwnd, GWLP_USERDATA);
             hdc = BeginPaint(hwnd, &paintstruct); // Acquire DC            
             
@@ -284,20 +296,24 @@ HANDLE ConnectComm(HWND hwnd, LPCWSTR lpFileName) {
 		return INVALID_HANDLE_VALUE;
 	}
 
+    // Prompt for Comm port configuration.
     cc.dwSize = sizeof(COMMCONFIG);
     GetCommConfig(hCom, &cc, &cc.dwSize);
     CommConfigDialog(lpFileName, hwnd, &cc);
 
+    // Save Comm port configuration. 
     success = SetCommState(hCom, &cc.dcb);
 	if (!success) {
 	    err = GetLastError();
 		return INVALID_HANDLE_VALUE;
 	}
 
+    // Prepare Comm port timeouts.
     if(!GetCommTimeouts(hCom, &CommTimeouts)) {
         return INVALID_HANDLE_VALUE;
     }
 
+    // Set some reasonable timeouts to help balance Comm port usage for reading/writing.
     CommTimeouts.ReadIntervalTimeout = 1;
     CommTimeouts.ReadTotalTimeoutMultiplier = 1;
     CommTimeouts.ReadTotalTimeoutConstant = 1;
@@ -306,7 +322,6 @@ HANDLE ConnectComm(HWND hwnd, LPCWSTR lpFileName) {
     CommTimeouts.WriteTotalTimeoutConstant = 100;
 
     SetCommTimeouts(hCom, &CommTimeouts);
-
 
     return hCom;
 }
@@ -323,12 +338,13 @@ HANDLE ConnectComm(HWND hwnd, LPCWSTR lpFileName) {
  -- 
  --	PROGRAMMER: Tom Nightingale
  -- 
- --	INTERFACE:  pollPort(PWDATA pWData)
+ --	INTERFACE:  pollPort(HWND hwnd, PWDATA pWData)
+ --                 HWND hwnd: The program's window handle.
  --                 PWDATA pWData: The window's stored data object.
  -- 
  --	RETURNS:    void.
  -- 
- --	NOTES:      Checks the open port for any new data, if received and not NULl, sends data to output string and calls 
+ --	NOTES:      Checks the open port for any new data, if received and not NULL, sends data to output string and calls 
  --             a printOut to render it on screen.
  --	
  ----------------------------------------------------------------------------------------------------------------------*/

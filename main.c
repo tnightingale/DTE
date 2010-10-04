@@ -42,8 +42,10 @@
  -- 
  --	RETURNS:    WINAPI.
  -- 
- --	NOTES:
- --	
+ --	NOTES: 
+ --             The message loop is handled with PeekMessage() as opposed to GetMessage() to allow non-interferring 
+ --             polling on the COMM port when there are no messages in the queue.
+ --
  ----------------------------------------------------------------------------------------------------------------------*/
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance, LPSTR lspszCmdParam, int nCmdShow) {
 	HWND hwnd;

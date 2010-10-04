@@ -6,7 +6,7 @@
  -- Functions:  
  --             HANDLE OpenPort(LPCWSTR)
  --             int Transmit(HANDLE, TCHAR)
- --             BOOL Recieve(HANDLE, TCHAR*)
+ --             TCHAR Recieve(HANDLE)
  --
  -- DATE:       September 29th 2010
  --
@@ -118,9 +118,9 @@ int Transmit(HANDLE hCom, TCHAR c) {
  -- 
  --	INTERFACE:  Recieve(HANDLE hCom, TCHAR* readBuff)
  --                 HANDLE hCom: The handle to write to.
- --                 TCHAR*: A buffer to contain recieved char.
  -- 
- --	RETURNS:    FALSE on error, TRUE on success.
+ --	RETURNS:    TCHAR: Returns the character received on the port.
+ --             On error, returns NULL.
  -- 
  --	NOTES:     Reads from open port and writes chars to buffer.
  --	
@@ -135,7 +135,6 @@ TCHAR Recieve(HANDLE hCom) {
         err = GetLastError();
         return NULL;
     }
-
 
     return (TCHAR) readBuff;
 }
