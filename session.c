@@ -76,9 +76,10 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             pWData->cursor.cxChar = tm.tmMaxCharWidth;
             pWData->cursor.cyChar = tm.tmHeight;
 
+            // Only display carret when in CONNECT mode.
             if (pWData->state == CONNECT) {
                 // Create a solid black caret. 
-                CreateCaret(hwnd, NULL, 2, pWData->cursor.cyChar); 
+                CreateCaret(hwnd, NULL, CARETWIDTH, pWData->cursor.cyChar); 
                 SetCaretPos(pWData->cursor.xCaret * pWData->cursor.cxChar, pWData->cursor.yCaret * pWData->cursor.cyChar);
                 // Display the caret. 
                 ShowCaret(hwnd);
@@ -409,20 +410,34 @@ void pollPort(HWND hwnd, PWDATA pWData) {
 
 BOOL outputAddChar(TCHAR c, POUTPUT pOutput) {
     int i;
+    TCHAR* tmp;
 
     if (pOutput->pos == pOutput->size - 1) {
         pOutput->size = 2 * pOutput->size;
-        pOutput->out = (TCHAR*) realloc(pOutput->out, pOutput->size * sizeof(TCHAR));
-
+        // Resizing output array // NOTE: This has been known to be problematic...
+        //pOutput->out = (TCHAR*) realloc(pOutput->out, pOutput->size * sizeof(TCHAR));
+        
+        // Alternative to realloc.
+        tmp = pOutput->out;
+        pOutput->out = (TCHAR*) malloc(pOutput->size * sizeof(TCHAR));
+        
         if (!pOutput->out) {
+            // Memory alloctation failed.
             return FALSE;
+        }
+
+        // Copy existing chars over into larger array.
+        // Fill remaining cells with whitespace.
+        for (i = 0; i < pOutput->size; i++) {
+            if (i < pOutput->pos) {
+                pOutput->out[i] = tmp[i];
+            } else {
+                pOutput->out[i] = ' ';
+            }
         }
     }
 
-    for (i = pOutput->pos + 1; i < pOutput->size; i++) {
-        pOutput->out[i] = ' ';
-    }
-
+    // Add new char and increment pos.
     pOutput->out[pOutput->pos] = c;
     pOutput->pos++;
 
